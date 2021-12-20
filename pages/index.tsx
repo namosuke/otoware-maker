@@ -6,6 +6,7 @@ import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { useRef, useState, useEffect } from "react";
 import styles from "./styles.module.css";
 import ReactTooltip from "react-tooltip";
+import TweetButton from "../components/tweetButton";
 
 const Home: NextPage = () => {
   const onFileInputChange =
@@ -46,7 +47,11 @@ const Home: NextPage = () => {
           setProgressValue(p.ratio);
         },
       });
-      await ffmpeg.load();
+      try {
+        await ffmpeg.load();
+      } catch (e) {
+        alert(e);
+      }
       onFileInputChange.current = async ({
         target: { files },
       }: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,26 +144,11 @@ const Home: NextPage = () => {
         　音声・動画ファイルをアップロードすることで、「音割れポッター」のように大音量で音割れしている音声・動画ファイルを生成できます。
         <br />
         　再生する際は、十分に音量を下げてから再生してください。
-        <br />
-        <a
-          href="https://twitter.com/share?ref_src=twsrc%5Etfw"
-          className="twitter-share-button"
-          data-size="large"
-          data-text="音割れメーカー"
-          data-url="https://otoware-maker.vercel.app"
-          data-related="barley_ural"
-          data-lang="ja"
-          data-show-count="false"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          ツイート
-        </a>
-        <script
-          async
-          src="https://platform.twitter.com/widgets.js"
-          charSet="utf-8"
-        ></script>
+        <TweetButton
+          buttonText="ツイート"
+          tweetText={"音割れメーカー\nhttps://otoware-maker.vercel.app"}
+          className="my-[10px] mx-auto"
+        />
       </div>
       <div
         className="mt-[40px] mb-[40px] p-[20px] max-w-[700px] w-[calc(100%-60px)] mx-auto
