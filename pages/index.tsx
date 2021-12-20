@@ -38,88 +38,88 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     (async () => {
-      const ffmpeg = createFFmpeg({
-        corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
-        logger: (log) => {
-          setProgressMessage(log.message);
-        },
-        progress: (p) => {
-          setProgressValue(p.ratio);
-        },
-      });
       try {
+        const ffmpeg = createFFmpeg({
+          corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
+          logger: (log) => {
+            setProgressMessage(log.message);
+          },
+          progress: (p) => {
+            setProgressValue(p.ratio);
+          },
+        });
         await ffmpeg.load();
+        onFileInputChange.current = async ({
+          target: { files },
+        }: React.ChangeEvent<HTMLInputElement>) => {
+          if (files) {
+            setIsProgress(true);
+            const { name } = files[0];
+            const ext = name.split(".").splice(-1)[0];
+            const mediaType = files[0].type.split("/")[0];
+            ffmpeg.FS(
+              "writeFile",
+              encodeURIComponent(name),
+              await fetchFile(files[0])
+            );
+            if (mediaType === "audio" || mediaType === "video") {
+              if (mediaType === "audio") {
+                await ffmpeg.run(
+                  "-i",
+                  encodeURIComponent(name),
+                  "-af",
+                  "volume=91dB",
+                  "-c:a",
+                  "pcm_s16le",
+                  "step1.wav"
+                );
+                await ffmpeg.run("-i", "step1.wav", `output.${ext}`);
+                setMediaTypeState("audio");
+              } else if (mediaType === "video") {
+                await ffmpeg.run(
+                  "-i",
+                  encodeURIComponent(name),
+                  "-vn",
+                  "-af",
+                  "volume=91dB",
+                  "-c:a",
+                  "pcm_s16le",
+                  "step1.wav"
+                );
+                await ffmpeg.run(
+                  "-i",
+                  encodeURIComponent(name),
+                  "-i",
+                  "step1.wav",
+                  "-c:v",
+                  "copy",
+                  "-c:a",
+                  "aac",
+                  "-map",
+                  "0:v:0",
+                  "-map",
+                  "1:a:0",
+                  `output.${ext}`
+                );
+                setMediaTypeState("video");
+              }
+              const data = ffmpeg.FS("readFile", `output.${ext}`);
+              setMediaSrc(
+                URL.createObjectURL(
+                  new Blob([data.buffer], { type: files[0].type })
+                )
+              );
+              setOutputSize(data.byteLength);
+              setOutputName(`音割れ${name}`);
+            } else {
+              console.log("音声ファイルか動画ファイルを指定してください");
+            }
+            setIsProgress(false);
+          }
+        };
       } catch (e) {
         alert(e);
       }
-      onFileInputChange.current = async ({
-        target: { files },
-      }: React.ChangeEvent<HTMLInputElement>) => {
-        if (files) {
-          setIsProgress(true);
-          const { name } = files[0];
-          const ext = name.split(".").splice(-1)[0];
-          const mediaType = files[0].type.split("/")[0];
-          ffmpeg.FS(
-            "writeFile",
-            encodeURIComponent(name),
-            await fetchFile(files[0])
-          );
-          if (mediaType === "audio" || mediaType === "video") {
-            if (mediaType === "audio") {
-              await ffmpeg.run(
-                "-i",
-                encodeURIComponent(name),
-                "-af",
-                "volume=91dB",
-                "-c:a",
-                "pcm_s16le",
-                "step1.wav"
-              );
-              await ffmpeg.run("-i", "step1.wav", `output.${ext}`);
-              setMediaTypeState("audio");
-            } else if (mediaType === "video") {
-              await ffmpeg.run(
-                "-i",
-                encodeURIComponent(name),
-                "-vn",
-                "-af",
-                "volume=91dB",
-                "-c:a",
-                "pcm_s16le",
-                "step1.wav"
-              );
-              await ffmpeg.run(
-                "-i",
-                encodeURIComponent(name),
-                "-i",
-                "step1.wav",
-                "-c:v",
-                "copy",
-                "-c:a",
-                "aac",
-                "-map",
-                "0:v:0",
-                "-map",
-                "1:a:0",
-                `output.${ext}`
-              );
-              setMediaTypeState("video");
-            }
-            const data = ffmpeg.FS("readFile", `output.${ext}`);
-            setMediaSrc(
-              URL.createObjectURL(
-                new Blob([data.buffer], { type: files[0].type })
-              )
-            );
-            setOutputSize(data.byteLength);
-            setOutputName(`音割れ${name}`);
-          } else {
-            console.log("音声ファイルか動画ファイルを指定してください");
-          }
-          setIsProgress(false);
-        }
-      };
     })();
   }, []);
 
