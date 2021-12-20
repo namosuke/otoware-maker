@@ -139,6 +139,26 @@ const Home: NextPage = () => {
         　音声・動画ファイルをアップロードすることで、「音割れポッター」のように大音量で音割れしている音声・動画ファイルを生成できます。
         <br />
         　再生する際は、十分に音量を下げてから再生してください。
+        <br />
+        <a
+          href="https://twitter.com/share?ref_src=twsrc%5Etfw"
+          className="twitter-share-button"
+          data-size="large"
+          data-text="音割れメーカー"
+          data-url="https://otoware-maker.vercel.app"
+          data-related="barley_ural"
+          data-lang="ja"
+          data-show-count="false"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ツイート
+        </a>
+        <script
+          async
+          src="https://platform.twitter.com/widgets.js"
+          charSet="utf-8"
+        ></script>
       </div>
       <div
         className="mt-[40px] mb-[40px] p-[20px] max-w-[700px] w-[calc(100%-60px)] mx-auto
