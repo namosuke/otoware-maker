@@ -15,6 +15,7 @@ const Home: NextPage = () => {
         target: { files },
       }: React.ChangeEvent<HTMLInputElement>) => Promise<void>
     >();
+  const [unsupported, setUnsupported] = useState(true);
   const [mediaSrc, setMediaSrc] = useState("");
   const [progressValue, setProgressValue] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
@@ -38,95 +39,116 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     (async () => {
+      const ffmpeg = createFFmpeg({
+        corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
+        logger: (log) => {
+          setProgressMessage(log.message);
+        },
+        progress: (p) => {
+          setProgressValue(p.ratio);
+        },
+      });
       try {
-        const ffmpeg = createFFmpeg({
-          corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
-          logger: (log) => {
-            setProgressMessage(log.message);
-          },
-          progress: (p) => {
-            setProgressValue(p.ratio);
-          },
-        });
         await ffmpeg.load();
-        onFileInputChange.current = async ({
-          target: { files },
-        }: React.ChangeEvent<HTMLInputElement>) => {
-          if (files) {
-            setIsProgress(true);
-            const { name } = files[0];
-            const ext = name.split(".").splice(-1)[0];
-            const mediaType = files[0].type.split("/")[0];
-            ffmpeg.FS(
-              "writeFile",
-              encodeURIComponent(name),
-              await fetchFile(files[0])
-            );
-            if (mediaType === "audio" || mediaType === "video") {
-              if (mediaType === "audio") {
-                await ffmpeg.run(
-                  "-i",
-                  encodeURIComponent(name),
-                  "-af",
-                  "volume=91dB",
-                  "-c:a",
-                  "pcm_s16le",
-                  "step1.wav"
-                );
-                await ffmpeg.run("-i", "step1.wav", `output.${ext}`);
-                setMediaTypeState("audio");
-              } else if (mediaType === "video") {
-                await ffmpeg.run(
-                  "-i",
-                  encodeURIComponent(name),
-                  "-vn",
-                  "-af",
-                  "volume=91dB",
-                  "-c:a",
-                  "pcm_s16le",
-                  "step1.wav"
-                );
-                await ffmpeg.run(
-                  "-i",
-                  encodeURIComponent(name),
-                  "-i",
-                  "step1.wav",
-                  "-c:v",
-                  "copy",
-                  "-c:a",
-                  "aac",
-                  "-map",
-                  "0:v:0",
-                  "-map",
-                  "1:a:0",
-                  `output.${ext}`
-                );
-                setMediaTypeState("video");
-              }
-              const data = ffmpeg.FS("readFile", `output.${ext}`);
-              setMediaSrc(
-                URL.createObjectURL(
-                  new Blob([data.buffer], { type: files[0].type })
-                )
-              );
-              setOutputSize(data.byteLength);
-              setOutputName(`音割れ${name}`);
-            } else {
-              console.log("音声ファイルか動画ファイルを指定してください");
-            }
-            setIsProgress(false);
-          }
-        };
       } catch (e) {
-        alert(e);
+        console.error(e);
+        setUnsupported(true);
       }
+      onFileInputChange.current = async ({
+        target: { files },
+      }: React.ChangeEvent<HTMLInputElement>) => {
+        if (files) {
+          setIsProgress(true);
+          const { name } = files[0];
+          const ext = name.split(".").splice(-1)[0];
+          const mediaType = files[0].type.split("/")[0];
+          ffmpeg.FS(
+            "writeFile",
+            encodeURIComponent(name),
+            await fetchFile(files[0])
+          );
+          if (mediaType === "audio" || mediaType === "video") {
+            if (mediaType === "audio") {
+              await ffmpeg.run(
+                "-i",
+                encodeURIComponent(name),
+                "-af",
+                "volume=91dB",
+                "-c:a",
+                "pcm_s16le",
+                "step1.wav"
+              );
+              await ffmpeg.run("-i", "step1.wav", `output.${ext}`);
+              setMediaTypeState("audio");
+            } else if (mediaType === "video") {
+              await ffmpeg.run(
+                "-i",
+                encodeURIComponent(name),
+                "-vn",
+                "-af",
+                "volume=91dB",
+                "-c:a",
+                "pcm_s16le",
+                "step1.wav"
+              );
+              await ffmpeg.run(
+                "-i",
+                encodeURIComponent(name),
+                "-i",
+                "step1.wav",
+                "-c:v",
+                "copy",
+                "-c:a",
+                "aac",
+                "-map",
+                "0:v:0",
+                "-map",
+                "1:a:0",
+                `output.${ext}`
+              );
+              setMediaTypeState("video");
+            }
+            const data = ffmpeg.FS("readFile", `output.${ext}`);
+            setMediaSrc(
+              URL.createObjectURL(
+                new Blob([data.buffer], { type: files[0].type })
+              )
+            );
+            setOutputSize(data.byteLength);
+            setOutputName(`音割れ${name}`);
+          } else {
+            console.log("音声ファイルか動画ファイルを指定してください");
+          }
+          setIsProgress(false);
+        }
+      };
     })();
   }, []);
 
   return (
     <Layout>
       <Head>
-        <title>TOP</title>
+        <title>音割れメーカー</title>
+        <meta
+          name="description"
+          content="音声・動画ファイルをアップロードすることで、「音割れポッター」のように大音量で音割れしている音声・動画ファイルを生成できるWebサービスです！"
+        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <link rel="apple-touch-icon" href="/favicon.png" />
+        <meta name="apple-mobile-web-app-title" content="音割れメーカー" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@barley_ural" />
+        <meta property="og:url" content="https://otoware-maker.vercel.app" />
+        <meta property="og:title" content="音割れメーカー" />
+        <meta
+          property="og:description"
+          content="音声・動画ファイルをアップロードすることで、「音割れポッター」のように大音量で音割れしている音声・動画ファイルを生成できるWebサービスです！"
+        />
+        <meta property="og:image" content="/ogp.jpg" />
       </Head>
       <div className="max-w-[400px] w-[calc(100%-40px)] mx-auto pt-[20px]">
         <Image
@@ -154,6 +176,12 @@ const Home: NextPage = () => {
         className="mt-[40px] mb-[40px] p-[20px] max-w-[700px] w-[calc(100%-60px)] mx-auto
       bg-white/80 rounded-[20px]"
       >
+        {unsupported && (
+          <div className="text-red-500 font-bold text-center mb-[15px]">
+            iOS
+            Safariなど、一部のブラウザでは使えません。別のブラウザをお試しください。
+          </div>
+        )}
         <input
           type="file"
           accept="audio/*, video/*"
