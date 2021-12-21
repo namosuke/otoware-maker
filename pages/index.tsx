@@ -148,7 +148,10 @@ const Home: NextPage = () => {
           property="og:description"
           content="音声・動画ファイルをアップロードすることで、「音割れポッター」のように大音量で音割れしている音声・動画ファイルを生成できるWebサービスです！"
         />
-        <meta property="og:image" content="/ogp.jpg" />
+        <meta
+          property="og:image"
+          content="https://otoware-maker.vercel.app/ogp.jpg"
+        />
       </Head>
       <div className="max-w-[400px] w-[calc(100%-40px)] mx-auto pt-[20px]">
         <Image
