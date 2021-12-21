@@ -15,7 +15,7 @@ const Home: NextPage = () => {
         target: { files },
       }: React.ChangeEvent<HTMLInputElement>) => Promise<void>
     >();
-  const [unsupported, setUnsupported] = useState(true);
+  const [unsupported, setUnsupported] = useState(false);
   const [mediaSrc, setMediaSrc] = useState("");
   const [progressValue, setProgressValue] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
