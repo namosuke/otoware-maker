@@ -62,11 +62,8 @@ const Home: NextPage = () => {
           const { name } = files[0];
           const ext = name.split(".").splice(-1)[0];
           const mediaType = files[0].type.split("/")[0];
-          ffmpeg.FS(
-            "writeFile",
-            encodeURIComponent(name),
-            await fetchFile(files[0])
-          );
+          let data = await fetchFile(files[0]);
+          ffmpeg.FS("writeFile", encodeURIComponent(name), data);
           if (mediaType === "audio" || mediaType === "video") {
             if (mediaType === "audio") {
               await ffmpeg.run(
@@ -108,7 +105,9 @@ const Home: NextPage = () => {
               );
               setMediaTypeState("video");
             }
-            const data = ffmpeg.FS("readFile", `output.${ext}`);
+            try {
+              data = ffmpeg.FS("readFile", `output.${ext}`);
+            } catch (e) {}
             setMediaSrc(
               URL.createObjectURL(
                 new Blob([data.buffer], { type: files[0].type })
