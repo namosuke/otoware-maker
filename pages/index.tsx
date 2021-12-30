@@ -215,16 +215,16 @@ const Home: NextPage = () => {
           className="my-[10px] mx-auto"
         />
       </div>
+      {unsupported && (
+        <div className="bg-yellow-200 text-yellow-700 font-bold p-[20px] max-w-[700px] w-[calc(100%-60px)] mx-auto rounded-[20px]">
+          Safari
+          など、一部のブラウザでは動作しません。別のブラウザをお試しください。
+        </div>
+      )}
       <div
-        className="mt-[40px] mb-[40px] p-[20px] max-w-[700px] w-[calc(100%-60px)] mx-auto
+        className="mt-[20px] mb-[40px] p-[20px] max-w-[700px] w-[calc(100%-60px)] mx-auto
       bg-white/80 rounded-[20px]"
       >
-        {unsupported && (
-          <div className="text-red-500 font-bold text-center mb-[15px]">
-            iOS
-            Safariなど、一部のブラウザでは使えません。別のブラウザをお試しください。
-          </div>
-        )}
         {!isProgress && (
           <>
             <input
@@ -244,6 +244,9 @@ const Home: NextPage = () => {
             >
               音声・動画ファイルを選択
             </button>
+            <div className="text-center mt-[10px]">
+              または このページにドラッグ
+            </div>
           </>
         )}
         <div
