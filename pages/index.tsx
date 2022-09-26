@@ -52,7 +52,7 @@ const Home: NextPage = () => {
   useEffect(() => {
     (async () => {
       const ffmpeg = createFFmpeg({
-        corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
+        corePath: "https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js",
         logger: (log) => {
           setProgressMessage(log.message);
         },
