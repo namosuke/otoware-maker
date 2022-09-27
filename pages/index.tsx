@@ -250,7 +250,7 @@ const Home: NextPage = () => {
       {unsupported && (
         <div className="bg-yellow-200 text-yellow-700 font-bold p-[20px] max-w-[700px] w-[calc(100%-60px)] mx-auto rounded-[20px]">
           {error.includes("memory")
-            ? "メモリがいっぱいで、プログラムが動かせません。起動中の他のアプリを終了してから再度リロードしてみてください。"
+            ? "メモリが確保できず、プログラムを動かせません。一度このタブを閉じて、もう一度開いてみたり、ブラウザを再起動したり、他のアプリを終了すると、動かせるかもしれません。"
             : "このブラウザでは動作しない可能性があります。別のブラウザをお試しください。"}
         </div>
       )}
