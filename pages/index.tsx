@@ -16,7 +16,9 @@ const Home: NextPage = () => {
     >();
   const fileConvert = useRef<(files: FileList) => void>();
   const [unsupported, setUnsupported] = useState(false);
+  const [error, setError] = useState("");
   const [mediaSrc, setMediaSrc] = useState("");
+  const [mediaFile, setMediaFile] = useState<File>();
   const [progressValue, setProgressValue] = useState(0);
   const [progressMessage, setProgressMessage] = useState("");
   const [isProgress, setIsProgress] = useState(false);
@@ -38,6 +40,7 @@ const Home: NextPage = () => {
     noKeyboard: true,
     multiple: false,
   });
+  const [canShareFile, setCanShareFile] = useState(false);
 
   // https://stackoverflow.com/questions/15900485/correct-way-to-convert-size-in-bytes-to-kb-mb-gb-in-javascript
   function formatBytes(bytes: number, decimals = 2) {
@@ -49,22 +52,24 @@ const Home: NextPage = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
   }
 
+  // FFmpeg読み込み
   useEffect(() => {
     (async () => {
       const ffmpeg = createFFmpeg({
         corePath: "https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js",
-        logger: (log) => {
-          setProgressMessage(log.message);
-        },
         progress: (p) => {
           setProgressValue(p.ratio);
         },
+      });
+      ffmpeg.setLogger((log) => {
+        setProgressMessage(log.message);
       });
       try {
         await ffmpeg.load();
       } catch (e) {
         console.error(e);
         setUnsupported(true);
+        setError(e as string);
       }
       fileConvert.current = async (files: FileList) => {
         if (files.length) {
@@ -123,6 +128,9 @@ const Home: NextPage = () => {
                 new Blob([data.buffer], { type: files[0].type })
               )
             );
+            setMediaFile(
+              new File([data.buffer], `音割れ${name}`, { type: files[0].type })
+            );
             setOutputSize(data.byteLength);
             setOutputName(`音割れ${name}`);
           } else {
@@ -138,6 +146,8 @@ const Home: NextPage = () => {
       };
     })();
   }, []);
+
+  // ドラッグ＆ドロップ
   useEffect(() => {
     window.addEventListener("dragenter", () => {
       setIsDragging(true);
@@ -164,6 +174,16 @@ const Home: NextPage = () => {
       });
     }
   }, [isDragging, isDragAccept, isProgress]);
+
+  // ファイルシェア機能判定
+  useEffect(() => {
+    setCanShareFile(
+      navigator.canShare &&
+        navigator.canShare({
+          files: [new File(["test"], "test.txt", { type: "text/plain" })],
+        })
+    );
+  }, []);
 
   return (
     <Layout>
@@ -206,9 +226,21 @@ const Home: NextPage = () => {
       bg-white/80 rounded-[20px]"
       >
         <h2 className="font-bold text-lg text-center">使い方</h2>
-        　音声・動画ファイルをアップロードすることで、「音割れポッター」のように大音量で音割れしている音声・動画ファイルを生成できます。
-        <br />
-        　再生する際は、十分に音量を下げてから再生してください。
+        <ul className="list-disc ml-4">
+          <li>
+            このサイトでは、「音割れポッター」のような、大音量で音割れしている音声・動画ファイルを生成できます。
+          </li>
+          <li>
+            下にある「音声・動画ファイルを選択」ボタンをクリックするか、音声・動画ファイルをこのページにドラッグ&ドロップしてください。
+          </li>
+          <li>
+            ブラウザが対応していれば、変換が始まり、水色のプログレスバーが表示されます。
+          </li>
+          <li>変換が終わると、「ダウンロード」ボタンが表示されます。</li>
+          <li>
+            変換したファイルはサイト内で再生できます。その際は十分に音量を下げてから再生してください。
+          </li>
+        </ul>
         <TweetButton
           buttonText="ツイート"
           tweetText={"音割れメーカー\nhttps://otoware-maker.vercel.app"}
@@ -217,8 +249,9 @@ const Home: NextPage = () => {
       </div>
       {unsupported && (
         <div className="bg-yellow-200 text-yellow-700 font-bold p-[20px] max-w-[700px] w-[calc(100%-60px)] mx-auto rounded-[20px]">
-          Safari
-          など、一部のブラウザでは動作しません。別のブラウザをお試しください。
+          {error.includes("memory")
+            ? "メモリがいっぱいで、プログラムが動かせません。起動中の他のアプリを終了してから再度リロードしてみてください。"
+            : "このブラウザでは動作しない可能性があります。別のブラウザをお試しください。"}
         </div>
       )}
       <div
@@ -289,7 +322,7 @@ const Home: NextPage = () => {
             ></progress>
           </>
         )}
-        {mediaTypeState === "audio" && (
+        {mediaSrc && mediaTypeState === "audio" && (
           <audio
             src={mediaSrc}
             muted
@@ -297,13 +330,31 @@ const Home: NextPage = () => {
             className="mx-auto my-[20px]"
           ></audio>
         )}
-        {mediaTypeState === "video" && (
+        {mediaSrc && mediaTypeState === "video" && (
           <video
             src={mediaSrc}
             muted
             controls
             className="mx-auto my-[20px]"
           ></video>
+        )}
+        {canShareFile && mediaFile && (
+          <button
+            className="bg-[hsl(39,100%,46%)] hover:bg-[hsl(39,100%,52%)] block rounded-[5px] text-white mx-auto w-max px-[10px] py-[5px] shadow mb-5"
+            onClick={() => {
+              navigator.share({
+                text: "#音割れメーカー で作ったよ！",
+                url: location.href,
+                title: "音割れメーカー",
+                files: [mediaFile],
+              });
+            }}
+          >
+            SNSで{mediaTypeState === "video" ? "動画" : "音声"}をシェア
+            <div className="w-4 inline-block ml-[10px] relative top-[2px]">
+              <Image src="/share-arrow.svg" alt="" height="256" width="256" />
+            </div>
+          </button>
         )}
         {mediaSrc && (
           <a
@@ -321,7 +372,7 @@ const Home: NextPage = () => {
         )}
       </div>
       <div className="mt-[20px] mb-[40px] max-w-[700px] w-[calc(100%-60px)] mx-auto text-black text-xs">
-        アップロードしたファイルはブラウザで処理されており、サーバーには送信されません。
+        アップロードしたファイルはffmpeg.wasmを使用してブラウザだけで処理されており、サーバーには送信されません。
         <br />
         運営者：
         <a
