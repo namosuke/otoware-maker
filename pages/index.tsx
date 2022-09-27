@@ -343,9 +343,7 @@ const Home: NextPage = () => {
             className="bg-[hsl(39,100%,46%)] hover:bg-[hsl(39,100%,52%)] block rounded-[5px] text-white mx-auto w-max px-[10px] py-[5px] shadow mb-5"
             onClick={() => {
               navigator.share({
-                text: "#音割れメーカー で作ったよ！",
-                url: location.href,
-                title: "音割れメーカー",
+                text: `#音割れメーカー で作ったよ！\n${window.location.href}`,
                 files: [mediaFile],
               });
             }}
