@@ -69,7 +69,7 @@ const Home: NextPage = () => {
       } catch (e) {
         console.error(e);
         setUnsupported(true);
-        setError(e as string);
+        setError(e instanceof Error ? e.message : "");
       }
       fileConvert.current = async (files: FileList) => {
         if (files.length) {
